@@ -124,7 +124,7 @@ class FaceAnalizer(AbstractAnalizer):
 
         ## Reference Image is readable?
         if not self.readable(reference_image):
-            raise AttributeError("Reference Image is not readable")
+           raise AttributeError("Reference Image is not readable")
         
 
         cap = cv.VideoCapture(video_path)
@@ -272,7 +272,54 @@ class FaceAnalizer(AbstractAnalizer):
 
         return image
 
+    def only_a_diff(self, reference_image, video_path):
+        """
+        İt takess diff between every frame and reference_image
+
+        return  = a list have diff for every frame. 
+        """
+
+        if not self.readable(reference_image):
+           raise AttributeError("Reference Image is not readable")
         
+
+        cap = cv.VideoCapture(video_path)
+
+        # we keep all of differences between reference image and every frame that is arranged according to fps value
+        all_diffs = []
+
+        total_frame = int(cap.get(cv.CAP_PROP_FRAME_COUNT))
+        progress_bar = tqdm(total = total_frame, unit = 'frame')
+
+
+        while cap.isOpened():
+
+            ret, frame = cap.read()
+
+            if not ret:
+                break
+
+            # Readable Control  
+            if self.readable(frame):
+                eye_results_mean, lips_results_mean, eyebrow_results_mean = self.get_mean_multiple(frame)
+
+                ref_eye_results_mean, ref_lips_results_mean, ref_eyebrow_results_mean = self.get_mean_multiple(reference_image)
+
+                diff_eye =  [np.abs(x-y) for x, y in zip(eye_results_mean, ref_eye_results_mean)]
+                diff_lips = [np.abs(x-y) for x, y in zip(lips_results_mean, ref_lips_results_mean)]
+                diff_eyebrow = [np.abs(x-y) for x, y in zip(eyebrow_results_mean, ref_eyebrow_results_mean)]
+
+                change_value = np.mean([np.mean(diff_eye), np.mean(diff_lips), np.mean(diff_eyebrow)])
+
+                all_diffs.append(np.round(change_value, 2))
+
+            progress_bar.update(1)
+        
+       
+        cap.release()
+        progress_bar.close()
+    
+        return all_diffs
         
 
 

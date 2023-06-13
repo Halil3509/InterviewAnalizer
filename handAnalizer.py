@@ -100,6 +100,57 @@ class HandAnalizer():
             image =  detector.draw(hands, image)
 
         return image
+    
+    def only_a_diff(self, video_path):
+
+        cap = cv2.VideoCapture(video_path)
+
+        old_mean = 0
+        total_frame = 0
+
+
+        total_frame = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
+        progress_bar = tqdm(total = total_frame, unit = 'frame')
+
+        all_diffs = []
+
+        while cap.isOpened():
+
+            ret, frame = cap.read()
+
+            # Check if the video capture was successful
+            if not ret:
+                break
+    
+            # Call HandDetector Class 
+            detector = HandDetector()
+
+            # Find hand(s) coordinats
+            hands = detector.findHands(frame)
+
+
+            if len(hands) != 0:
+
+                # Find mean of distance
+                new_mean = detector.find_distance(hands)
+
+                # calculate change quality of hand
+                dist_change_score = detector.calc_change(new_mean, old_mean) * 100
+
+                # new will be old anymore right here
+                old_mean = new_mean
+
+                # Append after every frame
+                all_diffs.append(dist_change_score)
+
+            progress_bar.update(1)
+
+
+        progress_bar.close()
+        cap.release()  
+
+        return all_diffs
+
 
 
     

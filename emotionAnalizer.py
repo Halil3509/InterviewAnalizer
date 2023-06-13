@@ -6,6 +6,10 @@ from collections import Counter
 from tqdm import tqdm
 from tensorflow.keras.preprocessing.image import img_to_array
 
+
+
+
+
 class EmotionAnalizer():
 
     def __init__(self, model_path):
@@ -21,7 +25,7 @@ class EmotionAnalizer():
 
         return model 
     
-    def live_detection(self, frame):
+    def live_detection(self, frame, draw = True):
         """
         Predict emotion
         """
@@ -53,13 +57,18 @@ class EmotionAnalizer():
             # Convert str 
             emotion = self.emotion_labels[np.argmax(predictions)]
 
-            # Draw a rectangle around the face
-            cv2.rectangle(frame, (x, y), (x+w, y+h), (0, 255, 0), 2)
-            
-            # Display the emotion text
-            cv2.putText(frame, emotion, (x, y-10), cv2.FONT_HERSHEY_SIMPLEX, 0.9, (0, 255, 0), 2)
+            if draw:
+                    # Draw a rectangle around the face
+                cv2.rectangle(frame, (x, y), (x+w, y+h), (0, 255, 0), 2)
+                
+                # Display the emotion text
+                cv2.putText(frame, emotion, (x, y-10), cv2.FONT_HERSHEY_SIMPLEX, 0.9, (0, 255, 0), 2)
 
-        return frame
+                return frame
+            
+            return emotion
+
+        
 
 
 
@@ -139,6 +148,33 @@ class EmotionAnalizer():
 
         return emotion_number_dict
 
+
+    def only_a_diff(self, video_path):
+
+        video = cv2.VideoCapture(video_path)
+
+        all_emotions = []
+
+        # Iterate over frames
+        while video.isOpened():
+            # Read frame
+            ret, frame = video.read()
+            if not ret:
+                break
+            
+            # Detect emotion 
+            emotion = self.live_detection(frame, draw = False)
+
+            # Push detected emotion to result list
+            all_emotions.append(emotion)
+        
+
+
+        # Release video capture and close any open windows
+        video.release()
+    
+
+        return all_emotions
         
         
 
